@@ -1,0 +1,89 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Code coverage profiles and other test artifacts
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+
+# Go workspace file
+go.work
+go.work.sum
+
+# env file
+.env
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Environment files
+.env.local
+.env.*.local
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# WeChat related files
+access_token.json
+*.xml
+*.txt
+
+# Build directories
+build/
+dist/
+
+# Test coverage files
+*.cover
+*.coverprofile
+
+# Performance profiling files
+*.prof
+*.pprof
+
+# Local development files
+local/
+
+# Python related (keep common items)
+__pycache__/
+*.py[cod]
+*.pyc
+.pytest_cache/
+
+# Project specific
+wechatgo
+wechatgo_*
+.claude

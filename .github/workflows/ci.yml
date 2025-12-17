@@ -1,0 +1,144 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [1.21, 1.22, 1.23]
+
+    steps:
+    - name: 设置 Go ${{ matrix.go-version }}
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-version }}
+        cache: false
+
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 安装依赖
+      run: |
+        echo "下载 Go 模块依赖..."
+        go mod download
+        go mod tidy
+        echo "✅ 依赖安装完成"
+
+    - name: 运行格式化检查
+      run: |
+        if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+          echo "代码格式不正确，请运行 'make fmt'"
+          gofmt -s -l .
+          exit 1
+        fi
+
+    - name: 运行静态分析
+      run: go vet ./...
+
+    - name: 运行测试
+      run: |
+        echo "开始运行测试..."
+        go test -v ./...
+        echo "✅ 所有测试通过"
+
+    - name: 生成测试覆盖率报告
+      if: matrix.go-version == '1.23'
+      run: |
+        go test -coverprofile=coverage.out ./...
+        go tool cover -html=coverage.out -o coverage.html
+
+    - name: 上传覆盖率报告
+      if: matrix.go-version == '1.23'
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage.html
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+
+    - name: 运行代码格式检查
+      run: |
+        echo "检查代码格式..."
+        unformatted=$(gofmt -s -l .)
+        if [ -n "$unformatted" ]; then
+          echo "以下文件格式不正确:"
+          echo "$unformatted"
+          exit 1
+        fi
+        echo "✅ 代码格式正确"
+
+    - name: 运行静态分析
+      run: |
+        echo "运行 go vet..."
+        go vet ./...
+        echo "✅ 静态分析通过"
+
+  security:
+    name: Security
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+
+    - name: 运行基础安全检查
+      run: |
+        echo "运行基础安全检查..."
+        # 使用 go vet 进行基础安全检查
+        go vet ./...
+        echo "✅ 安全检查完成"
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+
+    - name: 构建项目
+      run: |
+        echo "验证所有包可以构建..."
+        go build -v ./...
+        echo "✅ 所有包构建成功"
+
+    - name: 创建版本信息
+      run: |
+        echo "Go version: $(go version)" > version-info.txt
+        echo "Build time: $(date)" >> version-info.txt
+        echo "Commit: ${{ github.sha }}" >> version-info.txt
+
+    - name: 上传版本信息
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-info
+        path: version-info.txt
